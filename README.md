@@ -30,7 +30,7 @@ It also serves as a hands-on project to practice building real-world systems usi
 - Vite
 - Tailwind CSS
 - Supabase
-- Lovable
+- AI-assisted development tools
 
 ---
 
