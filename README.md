@@ -1,43 +1,26 @@
-# Career Compass AI
+# 🧭 Career Compass AI
 
-Career Compass AI is a web application designed to help users explore career directions using AI-assisted guidance.
+A full-stack web application that helps users explore career directions using AI-powered guidance. Users reflect on their skills, interests, and goals, receiving personalized career path insights in return.
 
-This project is part of my transition into the tech industry, focusing on AI tools, system building, and modern web applications.
+## 🧩 The Problem
+Many professionals (especially those transitioning careers) struggle to map their existing skills into a clear, modern tech role. Generic advice usually fails to account for an individual's unique background.
 
----
+## ✅ The Solution
+Career Compass AI offers an interactive UI where users input their background data. The app processes this via AI and returns structured, actionable career path recommendations tailored to their profile.
 
-## 🚀 Overview
+## ⚙️ Tech Stack
+- **Frontend:** TypeScript, React/Vite, Tailwind CSS
+- **Backend/Database:** Supabase (Auth & DB)
+- **AI/Logic:** Integrated AI workflows for personalized outputs
 
-The application provides an interactive experience where users can reflect on their skills, interests, and goals, and receive AI-supported insights about possible career paths.
+## 🚀 How to Run Locally
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up your `.env` file with your Supabase and API credentials
+4. Start the development server: `npm run dev`
 
-It also serves as a hands-on project to practice building real-world systems using modern tools and integrations.
-
----
-
-## 🧠 What this project demonstrates
-
-- Building a modern frontend with TypeScript and Vite
-- Structuring a real-world application
-- Working with Supabase for backend/database
-- Using AI-oriented workflows in applications
-- Understanding how user input flows through a system
-
----
-
-## 🛠 Tech Stack
-
-- TypeScript
-- Vite
-- Tailwind CSS
-- Supabase
-- AI-assisted development tools
-
----
-
-## ⚙️ How to run
-
-```bash
-git clone https://github.com/MathBueno/career-compass-ai.git
-cd career-compass-ai
-npm install
-npm run dev
+## 💼 Skills Demonstrated
+- Modern frontend development (TypeScript, Tailwind)
+- Backend-as-a-Service integration (Supabase)
+- AI-oriented product development
+- Full-stack application architecture
