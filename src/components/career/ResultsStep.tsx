@@ -1,26 +1,33 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, AlertTriangle, CheckCircle2, ArrowUpRight, ChevronDown, ChevronUp, Zap, Shield, Target, Compass, Brain, BarChart3, RefreshCw } from 'lucide-react';
+import { TrendingUp, AlertTriangle, CheckCircle2, ArrowUpRight, ChevronDown, ChevronUp, Zap, Shield, Target, Compass, Brain, BarChart3, RefreshCw, ListOrdered, GitCompare, ShieldCheck, Award } from 'lucide-react';
 import { useState } from 'react';
 import { useCareer } from '@/contexts/CareerContext';
-import type { RoleMatch, CareerDirection, SkillSimulation, RiskInsight } from '@/types/career';
+import type { RoleMatch, CareerDirection, SkillSimulation, RiskInsight, SkillValidation, ImprovementStep, CareerPathComparison, ConfidenceLevel, ReadinessLevel } from '@/types/career';
+
+function ConfidenceBadge({ level }: { level: ConfidenceLevel }) {
+  const styles = { low: 'bg-destructive/10 text-destructive', medium: 'bg-warning-soft text-warning', high: 'bg-success-soft text-success' };
+  return <span className={`text-xs px-2 py-0.5 rounded font-medium capitalize ${styles[level]}`}>{level} confidence</span>;
+}
+
+function ReadinessBadge({ level }: { level: ReadinessLevel }) {
+  const map = { not_ready: { label: 'Not Ready', cls: 'bg-destructive/10 text-destructive' }, almost_ready: { label: 'Almost Ready', cls: 'bg-warning-soft text-warning' }, ready: { label: 'Ready', cls: 'bg-success-soft text-success' } };
+  const { label, cls } = map[level] || map.not_ready;
+  return <span className={`text-xs px-2 py-0.5 rounded font-medium ${cls}`}>{label}</span>;
+}
 
 function CompatibilityRing({ value, size = 60 }: { value: number; size?: number }) {
   const radius = (size - 8) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (value / 100) * circumference;
   const color = value >= 75 ? 'hsl(160, 60%, 40%)' : value >= 50 ? 'hsl(38, 90%, 50%)' : 'hsl(0, 72%, 55%)';
-
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="hsl(215, 20%, 88%)" strokeWidth="4" />
-        <motion.circle
-          cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth="4"
+        <motion.circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth="4"
           strokeLinecap="round" strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-        />
+          initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1, ease: 'easeOut' }} />
       </svg>
       <span className="absolute inset-0 flex items-center justify-center text-sm font-heading font-bold text-foreground">{value}%</span>
     </div>
@@ -29,25 +36,19 @@ function CompatibilityRing({ value, size = 60 }: { value: number; size?: number 
 
 function RoleCard({ role, index }: { role: RoleMatch; index: number }) {
   const [expanded, setExpanded] = useState(false);
-
   return (
-    <motion.div
-      className="card-elevated p-5 cursor-pointer"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      onClick={() => setExpanded(!expanded)}
-    >
+    <motion.div className="card-elevated p-5 cursor-pointer" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} onClick={() => setExpanded(!expanded)}>
       <div className="flex items-start gap-4">
         <CompatibilityRing value={role.compatibility} />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className="font-heading font-bold text-foreground">{role.roleName}</h3>
             <span className="px-2 py-0.5 rounded text-xs font-medium bg-secondary text-secondary-foreground capitalize">{role.seniority}</span>
+            {role.readiness && <ReadinessBadge level={role.readiness} />}
+            {role.confidence && <ConfidenceBadge level={role.confidence} />}
           </div>
           <p className="text-sm text-muted-foreground line-clamp-2">{role.explanation}</p>
-
-          <div className="flex gap-4 mt-3">
+          <div className="flex gap-4 mt-3 flex-wrap">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-highlight" />
               <span className="text-xs text-muted-foreground">Tech: {role.technicalMatch}%</span>
@@ -56,52 +57,39 @@ function RoleCard({ role, index }: { role: RoleMatch; index: number }) {
               <div className="w-2 h-2 rounded-full bg-success" />
               <span className="text-xs text-muted-foreground">Behavioral: {role.behavioralMatch}%</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-xs px-2 py-0.5 rounded ${
-                role.effortLevel === 'low' ? 'bg-success-soft text-success' :
-                role.effortLevel === 'medium' ? 'bg-warning-soft text-warning' :
-                'bg-destructive/10 text-destructive'
-              }`}>{role.effortLevel} effort</span>
-            </div>
+            <span className={`text-xs px-2 py-0.5 rounded ${role.effortLevel === 'low' ? 'bg-success-soft text-success' : role.effortLevel === 'medium' ? 'bg-warning-soft text-warning' : 'bg-destructive/10 text-destructive'}`}>{role.effortLevel} effort</span>
           </div>
         </div>
         <button className="text-muted-foreground mt-1">
           {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
         </button>
       </div>
-
       {expanded && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          className="mt-4 pt-4 border-t border-border space-y-3"
-        >
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 pt-4 border-t border-border space-y-3">
           <div>
             <h4 className="text-xs font-heading font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">Skills You Have</h4>
             <div className="flex flex-wrap gap-1.5">
-              {role.presentSkills.map(s => (
-                <span key={s} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-success-soft text-success text-xs">
-                  <CheckCircle2 className="w-3 h-3" />{s}
-                </span>
-              ))}
+              {role.presentSkills.map(s => <span key={s} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-success-soft text-success text-xs"><CheckCircle2 className="w-3 h-3" />{s}</span>)}
             </div>
           </div>
           {(role.missingSkills.hard.length > 0 || role.missingSkills.soft.length > 0) && (
             <div>
               <h4 className="text-xs font-heading font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">Skills to Develop</h4>
               <div className="flex flex-wrap gap-1.5">
-                {role.missingSkills.hard.map(s => (
-                  <span key={s} className="px-2 py-1 rounded bg-warning-soft text-warning text-xs">{s}</span>
-                ))}
-                {role.missingSkills.soft.map(s => (
-                  <span key={s} className="px-2 py-1 rounded bg-info-soft text-info text-xs">{s}</span>
-                ))}
+                {role.missingSkills.hard.map(s => <span key={s} className="px-2 py-1 rounded bg-warning-soft text-warning text-xs">{s}</span>)}
+                {role.missingSkills.soft.map(s => <span key={s} className="px-2 py-1 rounded bg-info-soft text-info text-xs">{s}</span>)}
               </div>
             </div>
           )}
-          <p className="text-xs text-muted-foreground">
-            ⏱ Estimated time to reach 100%: <strong className="text-foreground">{role.estimatedTime}</strong>
-          </p>
+          {role.criticalGaps && role.criticalGaps.length > 0 && (
+            <div>
+              <h4 className="text-xs font-heading font-semibold text-destructive mb-1.5 uppercase tracking-wider">⚠ Critical Gaps (Blockers)</h4>
+              <div className="flex flex-wrap gap-1.5">
+                {role.criticalGaps.map(s => <span key={s} className="px-2 py-1 rounded bg-destructive/10 text-destructive text-xs font-medium">{s}</span>)}
+              </div>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">⏱ Estimated time to reach 100%: <strong className="text-foreground">{role.estimatedTime}</strong></p>
         </motion.div>
       )}
     </motion.div>
@@ -118,12 +106,7 @@ function DirectionBar({ direction }: { direction: CareerDirection }) {
           {direction.isGrowthZone && <span className="text-xs px-1.5 py-0.5 rounded bg-highlight-soft text-highlight">Growth</span>}
         </div>
         <div className="progress-bar h-1.5">
-          <motion.div
-            className="progress-bar-fill"
-            initial={{ width: 0 }}
-            animate={{ width: `${direction.compatibility}%` }}
-            transition={{ duration: 1, ease: 'easeOut' }}
-          />
+          <motion.div className="progress-bar-fill" initial={{ width: 0 }} animate={{ width: `${direction.compatibility}%` }} transition={{ duration: 1, ease: 'easeOut' }} />
         </div>
       </div>
       <span className="font-heading font-bold text-sm text-foreground">{direction.compatibility}%</span>
@@ -137,12 +120,8 @@ function SimulationCard({ sim }: { sim: SkillSimulation }) {
     <div className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border/50">
       <Zap className="w-5 h-5 text-warning flex-shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-body text-foreground">
-          Learn <strong className="text-highlight">{sim.skill}</strong>
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Match: {sim.currentMatch}% → <strong className="text-success">{sim.projectedMatch}%</strong> (+{gain}%)
-        </p>
+        <p className="text-sm font-body text-foreground">Learn <strong className="text-highlight">{sim.skill}</strong></p>
+        <p className="text-xs text-muted-foreground">Match: {sim.currentMatch}% → <strong className="text-success">{sim.projectedMatch}%</strong> (+{gain}%)</p>
       </div>
       <ArrowUpRight className="w-4 h-4 text-success flex-shrink-0" />
     </div>
@@ -150,10 +129,8 @@ function SimulationCard({ sim }: { sim: SkillSimulation }) {
 }
 
 function RiskCard({ risk }: { risk: RiskInsight }) {
-  const levelIcon = risk.riskLevel === 'high' ? AlertTriangle : risk.riskLevel === 'medium' ? Shield : CheckCircle2;
-  const Icon = levelIcon;
+  const Icon = risk.riskLevel === 'high' ? AlertTriangle : risk.riskLevel === 'medium' ? Shield : CheckCircle2;
   const levelColor = risk.riskLevel === 'high' ? 'text-destructive' : risk.riskLevel === 'medium' ? 'text-warning' : 'text-success';
-
   return (
     <div className="p-3 rounded-lg bg-card border border-border/50">
       <div className="flex items-center gap-2 mb-1">
@@ -167,19 +144,248 @@ function RiskCard({ risk }: { risk: RiskInsight }) {
   );
 }
 
+function SkillValidationCard({ validation }: { validation: SkillValidation }) {
+  const reliabilityColor = validation.reliability === 'high' ? 'text-success' : validation.reliability === 'medium' ? 'text-warning' : 'text-destructive';
+  return (
+    <div className="p-3 rounded-lg bg-card border border-border/50">
+      <div className="flex items-center gap-2 mb-1">
+        <ShieldCheck className={`w-4 h-4 ${reliabilityColor}`} />
+        <span className="font-heading text-sm font-semibold text-foreground">{validation.skill}</span>
+        <span className={`text-xs capitalize ${reliabilityColor}`}>{validation.reliability} reliability</span>
+      </div>
+      <div className="flex gap-3 mt-1 mb-1">
+        <span className={`text-xs ${validation.declared ? 'text-success' : 'text-muted-foreground'}`}>{validation.declared ? '✓' : '✗'} Declared</span>
+        <span className={`text-xs ${validation.evidencedByExperience ? 'text-success' : 'text-muted-foreground'}`}>{validation.evidencedByExperience ? '✓' : '✗'} Evidenced</span>
+        <span className={`text-xs ${validation.alignedWithBehavior ? 'text-success' : 'text-muted-foreground'}`}>{validation.alignedWithBehavior ? '✓' : '✗'} Behavioral fit</span>
+      </div>
+      <p className="text-xs text-muted-foreground">{validation.note}</p>
+    </div>
+  );
+}
+
+function ImprovementPlanSection({ steps }: { steps: ImprovementStep[] }) {
+  return (
+    <div className="space-y-2">
+      {steps.map(step => {
+        const impactColor = step.impact === 'high' ? 'bg-success-soft text-success' : step.impact === 'medium' ? 'bg-warning-soft text-warning' : 'bg-secondary text-muted-foreground';
+        return (
+          <div key={step.order} className="flex gap-3 p-3 rounded-lg bg-card border border-border/50">
+            <div className="flex-shrink-0 w-7 h-7 rounded-full bg-highlight flex items-center justify-center text-white text-xs font-bold">{step.order}</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                <span className="font-heading text-sm font-semibold text-foreground">{step.action}</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded ${impactColor}`}>{step.impact} impact</span>
+              </div>
+              <p className="text-xs text-muted-foreground">Skill: <strong className="text-highlight">{step.skill}</strong> · {step.timeEstimate}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{step.reason}</p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ComparisonCard({ comparison }: { comparison: CareerPathComparison }) {
+  const effortColors = { low: 'text-success', medium: 'text-warning', high: 'text-destructive' };
+  return (
+    <div className="p-4 rounded-lg bg-card border border-border/50">
+      <div className="grid grid-cols-2 gap-4 mb-3">
+        <div className="text-center p-3 rounded-lg bg-secondary">
+          <h4 className="font-heading font-bold text-foreground text-sm mb-2">{comparison.pathA}</h4>
+          <p className="text-xs text-muted-foreground">Compatibility: <strong className="text-foreground">{comparison.compatibilityA}%</strong></p>
+          <p className="text-xs text-muted-foreground">Time: <strong className="text-foreground">{comparison.timeA}</strong></p>
+          <p className={`text-xs capitalize ${effortColors[comparison.effortA]}`}>{comparison.effortA} effort</p>
+        </div>
+        <div className="text-center p-3 rounded-lg bg-secondary">
+          <h4 className="font-heading font-bold text-foreground text-sm mb-2">{comparison.pathB}</h4>
+          <p className="text-xs text-muted-foreground">Compatibility: <strong className="text-foreground">{comparison.compatibilityB}%</strong></p>
+          <p className="text-xs text-muted-foreground">Time: <strong className="text-foreground">{comparison.timeB}</strong></p>
+          <p className={`text-xs capitalize ${effortColors[comparison.effortB]}`}>{comparison.effortB} effort</p>
+        </div>
+      </div>
+      <p className="text-sm text-highlight font-body">💡 {comparison.verdict}</p>
+    </div>
+  );
+}
+
 export default function ResultsStep() {
   const { analysis, setStep } = useCareer();
   if (!analysis) return null;
 
+  const sections = [
+    // Summary
+    <motion.div key="summary" className="card-elevated p-6 mb-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+      <div className="flex items-center gap-2 mb-3">
+        <Brain className="w-5 h-5 text-highlight" />
+        <h2 className="font-heading font-bold text-foreground">Profile Summary</h2>
+        {analysis.overallConfidence && <ConfidenceBadge level={analysis.overallConfidence} />}
+      </div>
+      <p className="text-sm font-body text-muted-foreground leading-relaxed">{analysis.profileSummary}</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+        {[
+          { label: 'Seniority', value: analysis.inference.seniorityLevel },
+          { label: 'Profile Type', value: analysis.inference.profileType },
+          { label: 'Orientation', value: analysis.inference.generalistVsSpecialist },
+          { label: 'Clarity', value: analysis.inference.profileClarity },
+        ].map(item => (
+          <div key={item.label} className="p-3 rounded-lg bg-secondary text-center">
+            <p className="text-xs text-muted-foreground">{item.label}</p>
+            <p className="font-heading font-bold text-foreground capitalize">{item.value}</p>
+          </div>
+        ))}
+      </div>
+      {analysis.inference.inconsistencies && analysis.inference.inconsistencies.length > 0 && (
+        <div className="mt-4 p-3 rounded-lg bg-warning-soft border border-warning/20">
+          <p className="text-xs font-heading font-semibold text-warning mb-1">⚠ Inconsistencies Detected</p>
+          <ul className="space-y-1">
+            {analysis.inference.inconsistencies.map((inc, i) => (
+              <li key={i} className="text-xs text-muted-foreground">• {inc}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </motion.div>,
+
+    // Behavioral
+    <motion.div key="behavioral" className="card-elevated p-6 mb-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+      <div className="flex items-center gap-2 mb-3">
+        <BarChart3 className="w-5 h-5 text-highlight" />
+        <h2 className="font-heading font-bold text-foreground">Behavioral Profile (OCEAN)</h2>
+      </div>
+      <div className="space-y-3 mb-4">
+        {[
+          { label: 'Openness', value: analysis.behavioralProfile.scores.openness },
+          { label: 'Conscientiousness', value: analysis.behavioralProfile.scores.conscientiousness },
+          { label: 'Extraversion', value: analysis.behavioralProfile.scores.extraversion },
+          { label: 'Agreeableness', value: analysis.behavioralProfile.scores.agreeableness },
+          { label: 'Emotional Stability', value: analysis.behavioralProfile.scores.emotionalStability },
+        ].map(trait => (
+          <div key={trait.label} className="flex items-center gap-3">
+            <span className="text-sm font-body text-muted-foreground w-40">{trait.label}</span>
+            <div className="flex-1 progress-bar h-2">
+              <motion.div className="progress-bar-fill" initial={{ width: 0 }} animate={{ width: `${(trait.value / 5) * 100}%` }} transition={{ duration: 0.8 }} />
+            </div>
+            <span className="text-sm font-heading font-bold text-foreground w-8 text-right">{trait.value.toFixed(1)}</span>
+          </div>
+        ))}
+      </div>
+      <p className="text-sm text-muted-foreground">{analysis.behavioralProfile.summary}</p>
+      <div className="flex flex-wrap gap-2 mt-3">
+        {analysis.behavioralProfile.workTendencies.map(t => (
+          <span key={t} className="px-2 py-1 rounded bg-highlight-soft text-highlight text-xs capitalize">{t}</span>
+        ))}
+      </div>
+    </motion.div>,
+
+    // Role Matches
+    <motion.div key="roles" className="mb-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+      <div className="flex items-center gap-2 mb-4">
+        <Target className="w-5 h-5 text-highlight" />
+        <h2 className="font-heading font-bold text-foreground">Best Role Matches</h2>
+      </div>
+      <div className="space-y-3">
+        {analysis.roleMatches.map((role, i) => <RoleCard key={role.roleName} role={role} index={i} />)}
+      </div>
+    </motion.div>,
+
+    // Career Directions
+    <motion.div key="directions" className="card-elevated p-6 mb-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+      <div className="flex items-center gap-2 mb-4">
+        <Compass className="w-5 h-5 text-highlight" />
+        <h2 className="font-heading font-bold text-foreground">Career Directions</h2>
+      </div>
+      <div className="space-y-3">
+        {analysis.careerDirections.map(d => <DirectionBar key={d.name} direction={d} />)}
+      </div>
+    </motion.div>,
+
+    // Career Comparisons
+    analysis.careerComparisons && analysis.careerComparisons.length > 0 && (
+      <motion.div key="comparisons" className="card-elevated p-6 mb-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.27 }}>
+        <div className="flex items-center gap-2 mb-4">
+          <GitCompare className="w-5 h-5 text-highlight" />
+          <h2 className="font-heading font-bold text-foreground">Career Path Comparison</h2>
+        </div>
+        <div className="space-y-3">
+          {analysis.careerComparisons.map((c, i) => <ComparisonCard key={i} comparison={c} />)}
+        </div>
+      </motion.div>
+    ),
+
+    // Improvement Plan
+    analysis.improvementPlan && analysis.improvementPlan.length > 0 && (
+      <motion.div key="improvement" className="card-elevated p-6 mb-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+        <div className="flex items-center gap-2 mb-4">
+          <ListOrdered className="w-5 h-5 text-highlight" />
+          <h2 className="font-heading font-bold text-foreground">Step-by-Step Improvement Plan</h2>
+          <span className="text-xs text-muted-foreground ml-auto">Prioritized by impact</span>
+        </div>
+        <ImprovementPlanSection steps={analysis.improvementPlan} />
+      </motion.div>
+    ),
+
+    // Skill Simulations
+    <motion.div key="simulations" className="card-elevated p-6 mb-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.33 }}>
+      <div className="flex items-center gap-2 mb-4">
+        <TrendingUp className="w-5 h-5 text-highlight" />
+        <h2 className="font-heading font-bold text-foreground">Skill Impact Simulation</h2>
+        <span className="text-xs text-muted-foreground ml-auto">What if you learned...</span>
+      </div>
+      <div className="space-y-2">
+        {analysis.skillSimulations.map(sim => <SimulationCard key={sim.skill} sim={sim} />)}
+      </div>
+    </motion.div>,
+
+    // Skill Validations
+    analysis.skillValidations && analysis.skillValidations.length > 0 && (
+      <motion.div key="validations" className="card-elevated p-6 mb-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+        <div className="flex items-center gap-2 mb-4">
+          <Award className="w-5 h-5 text-highlight" />
+          <h2 className="font-heading font-bold text-foreground">Skill Validation</h2>
+          <span className="text-xs text-muted-foreground ml-auto">Cross-checked against your profile</span>
+        </div>
+        <div className="space-y-2">
+          {analysis.skillValidations.map(v => <SkillValidationCard key={v.skill} validation={v} />)}
+        </div>
+      </motion.div>
+    ),
+
+    // Risk & Insights
+    analysis.riskInsights.length > 0 && (
+      <motion.div key="risks" className="card-elevated p-6 mb-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}>
+        <div className="flex items-center gap-2 mb-4">
+          <Shield className="w-5 h-5 text-warning" />
+          <h2 className="font-heading font-bold text-foreground">Risk & Insights</h2>
+        </div>
+        <div className="space-y-2">
+          {analysis.riskInsights.map(risk => <RiskCard key={risk.role} risk={risk} />)}
+        </div>
+      </motion.div>
+    ),
+
+    // Fastest Paths
+    analysis.fastestPaths.length > 0 && (
+      <motion.div key="paths" className="card-elevated p-6 mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+        <div className="flex items-center gap-2 mb-3">
+          <Zap className="w-5 h-5 text-success" />
+          <h2 className="font-heading font-bold text-foreground">Fastest Career Paths</h2>
+        </div>
+        <ul className="space-y-2">
+          {analysis.fastestPaths.map((path, i) => (
+            <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+              <ArrowUpRight className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />{path}
+            </li>
+          ))}
+        </ul>
+      </motion.div>
+    ),
+  ];
+
   return (
     <div className="min-h-screen bg-background px-4 py-12">
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <motion.div
-          className="text-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <motion.div className="text-center mb-12" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success-soft text-success text-sm font-medium mb-4">
             ✓ Analysis Complete
           </div>
@@ -188,183 +394,10 @@ export default function ResultsStep() {
           </h1>
         </motion.div>
 
-        {/* Summary */}
-        <motion.div
-          className="card-elevated p-6 mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <Brain className="w-5 h-5 text-highlight" />
-            <h2 className="font-heading font-bold text-foreground">Profile Summary</h2>
-          </div>
-          <p className="text-sm font-body text-muted-foreground leading-relaxed">{analysis.profileSummary}</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-            <div className="p-3 rounded-lg bg-secondary text-center">
-              <p className="text-xs text-muted-foreground">Seniority</p>
-              <p className="font-heading font-bold text-foreground capitalize">{analysis.inference.seniorityLevel}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-secondary text-center">
-              <p className="text-xs text-muted-foreground">Profile Type</p>
-              <p className="font-heading font-bold text-foreground capitalize">{analysis.inference.profileType}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-secondary text-center">
-              <p className="text-xs text-muted-foreground">Orientation</p>
-              <p className="font-heading font-bold text-foreground capitalize">{analysis.inference.generalistVsSpecialist}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-secondary text-center">
-              <p className="text-xs text-muted-foreground">Clarity</p>
-              <p className="font-heading font-bold text-foreground capitalize">{analysis.inference.profileClarity}</p>
-            </div>
-          </div>
-        </motion.div>
+        {sections}
 
-        {/* Behavioral Profile */}
-        <motion.div
-          className="card-elevated p-6 mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <BarChart3 className="w-5 h-5 text-highlight" />
-            <h2 className="font-heading font-bold text-foreground">Behavioral Profile (OCEAN)</h2>
-          </div>
-          <div className="space-y-3 mb-4">
-            {[
-              { label: 'Openness', value: analysis.behavioralProfile.scores.openness },
-              { label: 'Conscientiousness', value: analysis.behavioralProfile.scores.conscientiousness },
-              { label: 'Extraversion', value: analysis.behavioralProfile.scores.extraversion },
-              { label: 'Agreeableness', value: analysis.behavioralProfile.scores.agreeableness },
-              { label: 'Emotional Stability', value: analysis.behavioralProfile.scores.emotionalStability },
-            ].map(trait => (
-              <div key={trait.label} className="flex items-center gap-3">
-                <span className="text-sm font-body text-muted-foreground w-40">{trait.label}</span>
-                <div className="flex-1 progress-bar h-2">
-                  <motion.div
-                    className="progress-bar-fill"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(trait.value / 5) * 100}%` }}
-                    transition={{ duration: 0.8 }}
-                  />
-                </div>
-                <span className="text-sm font-heading font-bold text-foreground w-8 text-right">{trait.value.toFixed(1)}</span>
-              </div>
-            ))}
-          </div>
-          <p className="text-sm text-muted-foreground">{analysis.behavioralProfile.summary}</p>
-          <div className="flex flex-wrap gap-2 mt-3">
-            {analysis.behavioralProfile.workTendencies.map(t => (
-              <span key={t} className="px-2 py-1 rounded bg-highlight-soft text-highlight text-xs capitalize">{t}</span>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Role Matches */}
-        <motion.div
-          className="mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Target className="w-5 h-5 text-highlight" />
-            <h2 className="font-heading font-bold text-foreground">Best Role Matches</h2>
-          </div>
-          <div className="space-y-3">
-            {analysis.roleMatches.map((role, i) => (
-              <RoleCard key={role.roleName} role={role} index={i} />
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Career Directions */}
-        <motion.div
-          className="card-elevated p-6 mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Compass className="w-5 h-5 text-highlight" />
-            <h2 className="font-heading font-bold text-foreground">Career Directions</h2>
-          </div>
-          <div className="space-y-3">
-            {analysis.careerDirections.map(d => (
-              <DirectionBar key={d.name} direction={d} />
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Skill Simulations */}
-        <motion.div
-          className="card-elevated p-6 mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-highlight" />
-            <h2 className="font-heading font-bold text-foreground">Skill Impact Simulation</h2>
-            <span className="text-xs text-muted-foreground ml-auto">What if you learned...</span>
-          </div>
-          <div className="space-y-2">
-            {analysis.skillSimulations.map(sim => (
-              <SimulationCard key={sim.skill} sim={sim} />
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Risk & Insights */}
-        {analysis.riskInsights.length > 0 && (
-          <motion.div
-            className="card-elevated p-6 mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Shield className="w-5 h-5 text-warning" />
-              <h2 className="font-heading font-bold text-foreground">Risk & Insights</h2>
-            </div>
-            <div className="space-y-2">
-              {analysis.riskInsights.map(risk => (
-                <RiskCard key={risk.role} risk={risk} />
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Fastest Paths */}
-        {analysis.fastestPaths.length > 0 && (
-          <motion.div
-            className="card-elevated p-6 mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Zap className="w-5 h-5 text-success" />
-              <h2 className="font-heading font-bold text-foreground">Fastest Career Paths</h2>
-            </div>
-            <ul className="space-y-2">
-              {analysis.fastestPaths.map((path, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <ArrowUpRight className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
-                  {path}
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        )}
-
-        {/* Restart */}
         <div className="text-center">
-          <button
-            onClick={() => setStep('landing')}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border text-foreground font-heading font-medium hover:bg-secondary transition-colors"
-          >
+          <button onClick={() => setStep('landing')} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border text-foreground font-heading font-medium hover:bg-secondary transition-colors">
             <RefreshCw className="w-4 h-4" /> Start Over
           </button>
         </div>
