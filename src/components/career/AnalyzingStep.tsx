@@ -12,7 +12,7 @@ const STAGES = [
 ];
 
 export default function AnalyzingStep() {
-  const { profile, oceanScores, setAnalysis, setStep, setIsAnalyzing } = useCareer();
+  const { profile, oceanScores, setAnalysis, setStep, setIsAnalyzing, mode } = useCareer();
 
   useEffect(() => {
     let cancelled = false;
@@ -21,7 +21,7 @@ export default function AnalyzingStep() {
       setIsAnalyzing(true);
       try {
         const { data, error } = await supabase.functions.invoke('career-analyze', {
-          body: { profile, oceanScores },
+          body: { profile, oceanScores, mode },
         });
 
         if (cancelled) return;
@@ -33,7 +33,6 @@ export default function AnalyzingStep() {
       } catch (err) {
         console.error('Analysis failed:', err);
         if (!cancelled) {
-          // Fallback: generate mock data so the UI doesn't break
           setAnalysis(generateFallback());
           setStep('results');
         }
@@ -96,7 +95,8 @@ export default function AnalyzingStep() {
 
 function generateFallback(): CareerAnalysis {
   return {
-    profileSummary: "Based on the information provided, you appear to be a well-rounded professional with a blend of analytical and creative capabilities. Your profile suggests mid-level experience with strong potential for growth in multiple career directions.",
+    profileSummary: "Based on the information provided, you appear to be a well-rounded professional with a blend of analytical and creative capabilities.",
+    overallConfidence: 'medium',
     inference: {
       seniorityLevel: 'mid',
       profileType: 'analytical-creative',
@@ -106,33 +106,16 @@ function generateFallback(): CareerAnalysis {
     },
     behavioralProfile: {
       scores: { openness: 3.5, conscientiousness: 3.5, extraversion: 3, agreeableness: 3.5, emotionalStability: 3.5 },
-      summary: "You show a balanced personality with moderate openness to new experiences and strong conscientiousness. You work well both independently and in teams.",
+      summary: "You show a balanced personality with moderate openness and strong conscientiousness.",
       workTendencies: ['analytical', 'structured', 'collaborative'],
     },
     roleMatches: [
       {
-        roleName: 'Product Manager',
-        compatibility: 78,
-        seniority: 'mid',
-        technicalMatch: 72,
-        behavioralMatch: 84,
+        roleName: 'Product Manager', compatibility: 78, seniority: 'mid', technicalMatch: 72, behavioralMatch: 84,
         explanation: 'Your analytical mindset and collaborative nature align well with product management.',
         presentSkills: ['Communication', 'Analysis', 'Problem Solving'],
-        missingSkills: { hard: ['Product Analytics', 'A/B Testing Frameworks'], soft: ['Stakeholder Management'], languages: [] },
-        effortLevel: 'medium',
-        estimatedTime: '3-6 months',
-      },
-      {
-        roleName: 'Data Analyst',
-        compatibility: 72,
-        seniority: 'mid',
-        technicalMatch: 68,
-        behavioralMatch: 76,
-        explanation: 'Your structured approach and attention to detail make data analysis a natural fit.',
-        presentSkills: ['Problem Solving', 'Critical Thinking'],
-        missingSkills: { hard: ['SQL', 'Python', 'Tableau'], soft: ['Data Storytelling'], languages: [] },
-        effortLevel: 'medium',
-        estimatedTime: '4-8 months',
+        missingSkills: { hard: ['Product Analytics', 'A/B Testing'], soft: ['Stakeholder Management'], languages: [] },
+        effortLevel: 'medium', estimatedTime: '3-6 months', confidence: 'medium', readiness: 'almost_ready', criticalGaps: ['Product Analytics'],
       },
     ],
     careerDirections: [
@@ -140,13 +123,17 @@ function generateFallback(): CareerAnalysis {
       { name: 'Data & Analytics', compatibility: 72, roles: [], isComfortZone: false, isGrowthZone: true },
     ],
     skillSimulations: [
-      { skill: 'SQL', currentMatch: 72, projectedMatch: 85, affectedRoles: ['Data Analyst', 'Business Intelligence'] },
-      { skill: 'Product Analytics', currentMatch: 78, projectedMatch: 90, affectedRoles: ['Product Manager', 'Growth Manager'] },
+      { skill: 'SQL', currentMatch: 72, projectedMatch: 85, affectedRoles: ['Data Analyst'] },
     ],
     riskInsights: [
       { role: 'Isolated roles', riskLevel: 'medium', reason: 'Your extraversion suggests you need team interaction.', recommendation: 'Prioritize collaborative roles.' },
     ],
     transferableSkills: ['Communication', 'Problem Solving', 'Critical Thinking'],
-    fastestPaths: ['Product Manager via analytics upskilling', 'Business Analyst with SQL training'],
+    fastestPaths: ['Product Manager via analytics upskilling'],
+    skillValidations: [],
+    improvementPlan: [
+      { order: 1, action: 'Take an online course', skill: 'Product Analytics', impact: 'high', timeEstimate: '4 weeks', reason: 'Unlocks Product Manager readiness' },
+    ],
+    careerComparisons: [],
   };
 }
