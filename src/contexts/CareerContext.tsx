@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import type { UserProfile, OceanScores, CareerAnalysis, WizardStep, SkillItem } from '@/types/career';
+import type { UserProfile, OceanScores, CareerAnalysis, WizardStep, SkillItem, AnalysisMode } from '@/types/career';
 
 interface CareerContextType {
   step: WizardStep;
@@ -14,6 +14,8 @@ interface CareerContextType {
   setIsAnalyzing: (v: boolean) => void;
   addSkill: (skill: SkillItem) => void;
   removeSkill: (name: string, category: 'hard' | 'soft') => void;
+  mode: AnalysisMode;
+  setMode: (mode: AnalysisMode) => void;
 }
 
 const CareerContext = createContext<CareerContextType | null>(null);
@@ -42,6 +44,7 @@ export function CareerProvider({ children }: { children: React.ReactNode }) {
   const [oceanScores, setOceanScores] = useState<OceanScores>(defaultOcean);
   const [analysis, setAnalysis] = useState<CareerAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [mode, setMode] = useState<AnalysisMode>('full');
 
   const updateProfile = useCallback((updates: Partial<UserProfile>) => {
     setProfile(prev => ({ ...prev, ...updates }));
@@ -66,6 +69,7 @@ export function CareerProvider({ children }: { children: React.ReactNode }) {
     <CareerContext.Provider value={{
       step, setStep, profile, updateProfile, oceanScores, setOceanScores,
       analysis, setAnalysis, isAnalyzing, setIsAnalyzing, addSkill, removeSkill,
+      mode, setMode,
     }}>
       {children}
     </CareerContext.Provider>

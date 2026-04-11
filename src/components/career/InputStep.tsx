@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Link2, FileText, MessageSquare, Upload, X } from 'lucide-react';
+import { ArrowRight, Link2, FileText, MessageSquare, Upload, X, Zap, Layers } from 'lucide-react';
 import { useCareer } from '@/contexts/CareerContext';
+import type { AnalysisMode } from '@/types/career';
 
 export default function InputStep() {
-  const { profile, updateProfile, setStep } = useCareer();
+  const { profile, updateProfile, setStep, mode, setMode } = useCareer();
   const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedinUrl || '');
   const [freeText, setFreeText] = useState(profile.freeText);
   const [cvFileName, setCvFileName] = useState<string | null>(null);
@@ -25,7 +26,11 @@ export default function InputStep() {
 
   const handleNext = () => {
     updateProfile({ freeText, linkedinUrl: linkedinUrl || undefined });
-    setStep('profile');
+    if (mode === 'quick') {
+      setStep('analyzing');
+    } else {
+      setStep('profile');
+    }
   };
 
   return (
@@ -38,7 +43,7 @@ export default function InputStep() {
       >
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-highlight-soft text-highlight text-sm font-medium mb-4">
-            Step 1 of 4
+            Step 1 of {mode === 'quick' ? 2 : 4}
           </div>
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">
             Tell us about yourself
@@ -47,6 +52,32 @@ export default function InputStep() {
             Describe your skills, experience, and interests. The more detail, the better your analysis.
           </p>
         </div>
+
+        {/* Mode Toggle */}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex rounded-xl bg-card border border-border p-1">
+            {([
+              { value: 'quick' as AnalysisMode, label: 'Quick Mode', icon: Zap, desc: 'Fast input → instant results' },
+              { value: 'full' as AnalysisMode, label: 'Full Mode', icon: Layers, desc: 'Includes behavioral test' },
+            ]).map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setMode(opt.value)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-heading font-medium transition-all ${
+                  mode === opt.value
+                    ? 'bg-highlight text-white shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <opt.icon className="w-4 h-4" />
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="text-center text-xs text-muted-foreground mb-6">
+          {mode === 'quick' ? 'Skip the behavioral test for faster results.' : 'Full analysis with behavioral assessment for deeper insights.'}
+        </p>
 
         {/* Free text input */}
         <div className="card-elevated p-6 mb-4">
@@ -125,7 +156,7 @@ export default function InputStep() {
             whileHover={canProceed ? { scale: 1.02 } : {}}
             whileTap={canProceed ? { scale: 0.98 } : {}}
           >
-            Continue
+            {mode === 'quick' ? 'Analyze Now' : 'Continue'}
             <ArrowRight className="w-5 h-5" />
           </motion.button>
         </div>
