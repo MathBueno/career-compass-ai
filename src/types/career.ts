@@ -30,6 +30,28 @@ export interface BehavioralProfile {
   workTendencies: string[];
 }
 
+export type ConfidenceLevel = 'low' | 'medium' | 'high';
+export type ReadinessLevel = 'not_ready' | 'almost_ready' | 'ready';
+export type AnalysisMode = 'quick' | 'full';
+
+export interface SkillValidation {
+  skill: string;
+  declared: boolean;
+  evidencedByExperience: boolean;
+  alignedWithBehavior: boolean;
+  reliability: 'low' | 'medium' | 'high';
+  note: string;
+}
+
+export interface ImprovementStep {
+  order: number;
+  action: string;
+  skill: string;
+  impact: 'low' | 'medium' | 'high';
+  timeEstimate: string;
+  reason: string;
+}
+
 export interface RoleMatch {
   roleName: string;
   compatibility: number;
@@ -45,6 +67,9 @@ export interface RoleMatch {
   };
   effortLevel: 'low' | 'medium' | 'high';
   estimatedTime: string;
+  confidence: ConfidenceLevel;
+  readiness: ReadinessLevel;
+  criticalGaps: string[];
 }
 
 export interface CareerDirection {
@@ -77,8 +102,21 @@ export interface ProfileInference {
   inconsistencies: string[];
 }
 
+export interface CareerPathComparison {
+  pathA: string;
+  pathB: string;
+  effortA: 'low' | 'medium' | 'high';
+  effortB: 'low' | 'medium' | 'high';
+  timeA: string;
+  timeB: string;
+  compatibilityA: number;
+  compatibilityB: number;
+  verdict: string;
+}
+
 export interface CareerAnalysis {
   profileSummary: string;
+  overallConfidence: ConfidenceLevel;
   inference: ProfileInference;
   behavioralProfile: BehavioralProfile;
   roleMatches: RoleMatch[];
@@ -87,6 +125,9 @@ export interface CareerAnalysis {
   riskInsights: RiskInsight[];
   transferableSkills: string[];
   fastestPaths: string[];
+  skillValidations: SkillValidation[];
+  improvementPlan: ImprovementStep[];
+  careerComparisons: CareerPathComparison[];
 }
 
 export type WizardStep = 'landing' | 'input' | 'profile' | 'assessment' | 'analyzing' | 'results';
