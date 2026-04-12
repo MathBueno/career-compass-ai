@@ -12,24 +12,24 @@ interface Question {
 }
 
 const QUESTIONS: Question[] = [
-  { id: 1, text: "I enjoy exploring new ideas and creative approaches.", trait: 'openness' },
-  { id: 2, text: "I keep my workspace well-organized and follow through on plans.", trait: 'conscientiousness' },
-  { id: 3, text: "I feel energized by working with others in a team setting.", trait: 'extraversion' },
-  { id: 4, text: "I prioritize maintaining harmony in professional relationships.", trait: 'agreeableness' },
-  { id: 5, text: "I stay calm and focused even under pressure.", trait: 'emotionalStability' },
-  { id: 6, text: "I actively seek out new skills or knowledge areas.", trait: 'openness' },
-  { id: 7, text: "I set clear goals and work systematically towards them.", trait: 'conscientiousness' },
-  { id: 8, text: "I naturally take the lead in group discussions.", trait: 'extraversion' },
-  { id: 9, text: "I'm good at seeing things from others' perspectives.", trait: 'agreeableness' },
-  { id: 10, text: "I handle criticism constructively without taking it personally.", trait: 'emotionalStability' },
-  { id: 11, text: "I prefer unconventional solutions over tried-and-true ones.", trait: 'openness' },
-  { id: 12, text: "I prefer sticking to schedules and completing tasks on time.", trait: 'conscientiousness' },
-  { id: 13, text: "I find networking events enjoyable rather than draining.", trait: 'extraversion' },
-  { id: 14, text: "I tend to compromise rather than push my own agenda.", trait: 'agreeableness' },
-  { id: 15, text: "I bounce back quickly from setbacks or failures.", trait: 'emotionalStability' },
+  { id: 1, text: "Gosto de explorar novas ideias e abordagens criativas.", trait: 'openness' },
+  { id: 2, text: "Mantenho meu espaço de trabalho organizado e sigo meus planos até o fim.", trait: 'conscientiousness' },
+  { id: 3, text: "Me sinto energizado ao trabalhar com outras pessoas em equipe.", trait: 'extraversion' },
+  { id: 4, text: "Priorizo manter harmonia nas relações profissionais.", trait: 'agreeableness' },
+  { id: 5, text: "Mantenho a calma e o foco mesmo sob pressão.", trait: 'emotionalStability' },
+  { id: 6, text: "Busco ativamente novas habilidades ou áreas de conhecimento.", trait: 'openness' },
+  { id: 7, text: "Defino metas claras e trabalho sistematicamente para alcançá-las.", trait: 'conscientiousness' },
+  { id: 8, text: "Naturalmente assumo a liderança em discussões de grupo.", trait: 'extraversion' },
+  { id: 9, text: "Tenho facilidade em ver as coisas pela perspectiva dos outros.", trait: 'agreeableness' },
+  { id: 10, text: "Lido com críticas de forma construtiva, sem levar para o lado pessoal.", trait: 'emotionalStability' },
+  { id: 11, text: "Prefiro soluções não convencionais às tradicionais.", trait: 'openness' },
+  { id: 12, text: "Prefiro seguir cronogramas e completar tarefas no prazo.", trait: 'conscientiousness' },
+  { id: 13, text: "Acho eventos de networking agradáveis em vez de cansativos.", trait: 'extraversion' },
+  { id: 14, text: "Tendo a buscar consenso em vez de impor minha opinião.", trait: 'agreeableness' },
+  { id: 15, text: "Me recupero rapidamente de contratempos ou fracassos.", trait: 'emotionalStability' },
 ];
 
-const LABELS = ['Strongly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'];
+const LABELS = ['Discordo Totalmente', 'Discordo', 'Neutro', 'Concordo', 'Concordo Totalmente'];
 
 export default function AssessmentStep() {
   const { setStep, setOceanScores } = useCareer();
@@ -76,17 +76,16 @@ export default function AssessmentStep() {
       >
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-highlight-soft text-highlight text-sm font-medium mb-4">
-            Step 3 of 4
+            Passo 2 de 3
           </div>
           <h2 className="text-3xl font-heading font-bold text-foreground mb-3">
-            Behavioral Assessment
+            Avaliação Comportamental
           </h2>
           <p className="text-muted-foreground font-body max-w-md mx-auto">
-            Rate how much each statement describes you. This helps us understand your work personality.
+            Avalie o quanto cada afirmação descreve você. Isso nos ajuda a entender seu perfil de trabalho.
           </p>
         </div>
 
-        {/* Progress bar */}
         <div className="progress-bar mb-8">
           <div className="progress-bar-fill" style={{ width: `${progress * 100}%` }} />
         </div>
@@ -126,10 +125,10 @@ export default function AssessmentStep() {
 
         <div className="flex justify-between mt-8">
           <button
-            onClick={() => currentPage > 0 ? setCurrentPage(p => p - 1) : setStep('profile')}
+            onClick={() => currentPage > 0 ? setCurrentPage(p => p - 1) : setStep('input')}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border text-foreground font-heading font-medium hover:bg-secondary transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" /> Voltar
           </button>
 
           {currentPage < totalPages - 1 ? (
@@ -140,7 +139,7 @@ export default function AssessmentStep() {
               whileHover={pageAnswered ? { scale: 1.02 } : {}}
               whileTap={pageAnswered ? { scale: 0.98 } : {}}
             >
-              Next <ArrowRight className="w-5 h-5" />
+              Próximo <ArrowRight className="w-5 h-5" />
             </motion.button>
           ) : (
             <motion.button
@@ -150,13 +149,13 @@ export default function AssessmentStep() {
               whileHover={allAnswered ? { scale: 1.02 } : {}}
               whileTap={allAnswered ? { scale: 0.98 } : {}}
             >
-              Analyze My Profile <ArrowRight className="w-5 h-5" />
+              Analisar Meu Perfil <ArrowRight className="w-5 h-5" />
             </motion.button>
           )}
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-4">
-          Page {currentPage + 1} of {totalPages} · {Object.keys(answers).length}/{QUESTIONS.length} answered
+          Página {currentPage + 1} de {totalPages} · {Object.keys(answers).length}/{QUESTIONS.length} respondidas
         </p>
       </motion.div>
     </div>
