@@ -1,40 +1,41 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Brain, Sparkles, Target } from 'lucide-react';
+import { Brain, Sparkles, Target, AlertTriangle } from 'lucide-react';
 import { useCareer } from '@/contexts/CareerContext';
 import { supabase } from '@/integrations/supabase/client';
 import type { CareerAnalysis } from '@/types/career';
 
 const STAGES = [
-  { icon: Brain, label: 'Analyzing your profile...' },
-  { icon: Sparkles, label: 'Mapping behavioral patterns...' },
-  { icon: Target, label: 'Generating career matches...' },
+  { icon: Brain, label: 'Analisando seu perfil...' },
+  { icon: Sparkles, label: 'Mapeando padrões comportamentais...' },
+  { icon: Target, label: 'Gerando correspondências de carreira...' },
 ];
 
 export default function AnalyzingStep() {
   const { profile, oceanScores, setAnalysis, setStep, setIsAnalyzing, mode } = useCareer();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function analyze() {
       setIsAnalyzing(true);
+      setError(null);
       try {
-        const { data, error } = await supabase.functions.invoke('career-analyze', {
+        const { data, error: fnError } = await supabase.functions.invoke('career-analyze', {
           body: { profile, oceanScores, mode },
         });
 
         if (cancelled) return;
-        if (error) throw error;
+        if (fnError) throw fnError;
+        if (data?.error) throw new Error(data.error);
 
-        const analysis = data as CareerAnalysis;
-        setAnalysis(analysis);
+        setAnalysis(data as CareerAnalysis);
         setStep('results');
-      } catch (err) {
-        console.error('Analysis failed:', err);
+      } catch (err: any) {
+        console.error('Análise falhou:', err);
         if (!cancelled) {
-          setAnalysis(generateFallback());
-          setStep('results');
+          setError(err?.message || 'Erro ao analisar perfil. Tente novamente.');
         }
       } finally {
         setIsAnalyzing(false);
@@ -44,6 +45,32 @@ export default function AnalyzingStep() {
     analyze();
     return () => { cancelled = true; };
   }, []);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <AlertTriangle className="w-12 h-12 text-warning mx-auto mb-4" />
+          <h2 className="text-xl font-heading font-bold text-foreground mb-3">Erro na Análise</h2>
+          <p className="text-sm text-muted-foreground mb-6">{error}</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => setStep('input')}
+              className="px-6 py-2.5 rounded-xl border border-border text-foreground font-heading font-medium hover:bg-secondary transition-colors"
+            >
+              Voltar
+            </button>
+            <button
+              onClick={() => { setError(null); setStep('analyzing'); }}
+              className="px-6 py-2.5 rounded-xl accent-gradient text-accent-foreground font-heading font-semibold"
+            >
+              Tentar Novamente
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -64,7 +91,7 @@ export default function AnalyzingStep() {
         </div>
 
         <h2 className="text-2xl font-heading font-bold text-foreground mb-6">
-          Analyzing Your Career DNA
+          Analisando Seu DNA Profissional
         </h2>
 
         <div className="space-y-4">
@@ -87,53 +114,8 @@ export default function AnalyzingStep() {
           ))}
         </div>
 
-        <p className="text-xs text-muted-foreground mt-8">This usually takes 10-30 seconds</p>
+        <p className="text-xs text-muted-foreground mt-8">Isso geralmente leva 10-30 segundos</p>
       </motion.div>
     </div>
   );
-}
-
-function generateFallback(): CareerAnalysis {
-  return {
-    profileSummary: "Based on the information provided, you appear to be a well-rounded professional with a blend of analytical and creative capabilities.",
-    overallConfidence: 'medium',
-    inference: {
-      seniorityLevel: 'mid',
-      profileType: 'analytical-creative',
-      generalistVsSpecialist: 'generalist',
-      profileClarity: 'medium',
-      inconsistencies: [],
-    },
-    behavioralProfile: {
-      scores: { openness: 3.5, conscientiousness: 3.5, extraversion: 3, agreeableness: 3.5, emotionalStability: 3.5 },
-      summary: "You show a balanced personality with moderate openness and strong conscientiousness.",
-      workTendencies: ['analytical', 'structured', 'collaborative'],
-    },
-    roleMatches: [
-      {
-        roleName: 'Product Manager', compatibility: 78, seniority: 'mid', technicalMatch: 72, behavioralMatch: 84,
-        explanation: 'Your analytical mindset and collaborative nature align well with product management.',
-        presentSkills: ['Communication', 'Analysis', 'Problem Solving'],
-        missingSkills: { hard: ['Product Analytics', 'A/B Testing'], soft: ['Stakeholder Management'], languages: [] },
-        effortLevel: 'medium', estimatedTime: '3-6 months', confidence: 'medium', readiness: 'almost_ready', criticalGaps: ['Product Analytics'],
-      },
-    ],
-    careerDirections: [
-      { name: 'Product & Strategy', compatibility: 78, roles: [], isComfortZone: true, isGrowthZone: false },
-      { name: 'Data & Analytics', compatibility: 72, roles: [], isComfortZone: false, isGrowthZone: true },
-    ],
-    skillSimulations: [
-      { skill: 'SQL', currentMatch: 72, projectedMatch: 85, affectedRoles: ['Data Analyst'] },
-    ],
-    riskInsights: [
-      { role: 'Isolated roles', riskLevel: 'medium', reason: 'Your extraversion suggests you need team interaction.', recommendation: 'Prioritize collaborative roles.' },
-    ],
-    transferableSkills: ['Communication', 'Problem Solving', 'Critical Thinking'],
-    fastestPaths: ['Product Manager via analytics upskilling'],
-    skillValidations: [],
-    improvementPlan: [
-      { order: 1, action: 'Take an online course', skill: 'Product Analytics', impact: 'high', timeEstimate: '4 weeks', reason: 'Unlocks Product Manager readiness' },
-    ],
-    careerComparisons: [],
-  };
 }

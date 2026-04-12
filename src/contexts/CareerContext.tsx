@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import type { UserProfile, OceanScores, CareerAnalysis, WizardStep, SkillItem, AnalysisMode } from '@/types/career';
+import type { UserProfile, OceanScores, CareerAnalysis, WizardStep, NormalizedSkill, AnalysisMode } from '@/types/career';
 
 interface CareerContextType {
   step: WizardStep;
@@ -12,8 +12,8 @@ interface CareerContextType {
   setAnalysis: (analysis: CareerAnalysis) => void;
   isAnalyzing: boolean;
   setIsAnalyzing: (v: boolean) => void;
-  addSkill: (skill: SkillItem) => void;
-  removeSkill: (name: string, category: 'hard' | 'soft') => void;
+  addSkill: (name: string, category: 'hard' | 'soft') => void;
+  removeSkill: (name: string) => void;
   mode: AnalysisMode;
   setMode: (mode: AnalysisMode) => void;
 }
@@ -22,12 +22,7 @@ const CareerContext = createContext<CareerContextType | null>(null);
 
 const defaultProfile: UserProfile = {
   freeText: '',
-  hardSkills: [],
-  softSkills: [],
-  languages: [],
-  experience: [],
-  courses: [],
-  certifications: [],
+  skills: [],
 };
 
 const defaultOcean: OceanScores = {
@@ -50,19 +45,18 @@ export function CareerProvider({ children }: { children: React.ReactNode }) {
     setProfile(prev => ({ ...prev, ...updates }));
   }, []);
 
-  const addSkill = useCallback((skill: SkillItem) => {
+  const addSkill = useCallback((name: string, category: 'hard' | 'soft') => {
     setProfile(prev => {
-      const key = skill.category === 'hard' ? 'hardSkills' : 'softSkills';
-      if (prev[key].some(s => s.name.toLowerCase() === skill.name.toLowerCase())) return prev;
-      return { ...prev, [key]: [...prev[key], skill] };
+      if (prev.skills.some(s => s.name.toLowerCase() === name.toLowerCase())) return prev;
+      return { ...prev, skills: [...prev.skills, { name, category }] };
     });
   }, []);
 
-  const removeSkill = useCallback((name: string, category: 'hard' | 'soft') => {
-    setProfile(prev => {
-      const key = category === 'hard' ? 'hardSkills' : 'softSkills';
-      return { ...prev, [key]: prev[key].filter(s => s.name !== name) };
-    });
+  const removeSkill = useCallback((name: string) => {
+    setProfile(prev => ({
+      ...prev,
+      skills: prev.skills.filter(s => s.name !== name),
+    }));
   }, []);
 
   return (

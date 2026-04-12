@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Link2, FileText, MessageSquare, Upload, X, Zap, Layers } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Link2, MessageSquare, Upload, X, Zap, Layers, FileText } from 'lucide-react';
 import { useCareer } from '@/contexts/CareerContext';
+import SkillAutocomplete from './SkillAutocomplete';
 import type { AnalysisMode } from '@/types/career';
 
 export default function InputStep() {
-  const { profile, updateProfile, setStep, mode, setMode } = useCareer();
+  const { profile, updateProfile, setStep, mode, setMode, addSkill, removeSkill } = useCareer();
   const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedinUrl || '');
   const [freeText, setFreeText] = useState(profile.freeText);
   const [cvFileName, setCvFileName] = useState<string | null>(null);
@@ -29,9 +30,11 @@ export default function InputStep() {
     if (mode === 'quick') {
       setStep('analyzing');
     } else {
-      setStep('profile');
+      setStep('assessment');
     }
   };
+
+  const totalSteps = mode === 'quick' ? 2 : 3;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
@@ -43,13 +46,13 @@ export default function InputStep() {
       >
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-highlight-soft text-highlight text-sm font-medium mb-4">
-            Step 1 of {mode === 'quick' ? 2 : 4}
+            Passo 1 de {totalSteps}
           </div>
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">
-            Tell us about yourself
+            Conte sobre você
           </h2>
           <p className="text-muted-foreground font-body max-w-md mx-auto">
-            Describe your skills, experience, and interests. The more detail, the better your analysis.
+            Descreva suas habilidades, experiência e interesses. Quanto mais detalhes, melhor a análise.
           </p>
         </div>
 
@@ -57,8 +60,8 @@ export default function InputStep() {
         <div className="flex justify-center mb-8">
           <div className="inline-flex rounded-xl bg-card border border-border p-1">
             {([
-              { value: 'quick' as AnalysisMode, label: 'Quick Mode', icon: Zap, desc: 'Fast input → instant results' },
-              { value: 'full' as AnalysisMode, label: 'Full Mode', icon: Layers, desc: 'Includes behavioral test' },
+              { value: 'quick' as AnalysisMode, label: 'Modo Rápido', icon: Zap, desc: 'Entrada rápida → resultados instantâneos' },
+              { value: 'full' as AnalysisMode, label: 'Modo Completo', icon: Layers, desc: 'Inclui teste comportamental' },
             ]).map(opt => (
               <button
                 key={opt.value}
@@ -76,26 +79,64 @@ export default function InputStep() {
           </div>
         </div>
         <p className="text-center text-xs text-muted-foreground mb-6">
-          {mode === 'quick' ? 'Skip the behavioral test for faster results.' : 'Full analysis with behavioral assessment for deeper insights.'}
+          {mode === 'quick' ? 'Pula o teste comportamental para resultados mais rápidos.' : 'Análise completa com avaliação comportamental para insights mais profundos.'}
         </p>
 
         {/* Free text input */}
         <div className="card-elevated p-6 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <MessageSquare className="w-5 h-5 text-highlight" />
-            <h3 className="font-heading font-semibold text-foreground">Your Professional Profile</h3>
+            <h3 className="font-heading font-semibold text-foreground">Seu Perfil Profissional</h3>
           </div>
           <textarea
             value={freeText}
             onChange={(e) => setFreeText(e.target.value)}
-            placeholder="Example: I have 5 years of experience in marketing, specializing in digital campaigns and data analytics. I'm skilled in Google Ads, SEO, and A/B testing. I enjoy creative problem-solving and have recently been exploring product management..."
+            placeholder="Exemplo: Tenho 5 anos de experiência em marketing, especializado em campanhas digitais e análise de dados. Tenho habilidades em Google Ads, SEO e testes A/B. Gosto de resolver problemas de forma criativa e recentemente tenho explorado gestão de produtos..."
             className="w-full h-40 bg-surface rounded-lg border border-border p-4 text-foreground font-body text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring resize-none transition-all"
           />
           <p className="text-xs text-muted-foreground mt-2">
             {freeText.length < 20
-              ? `Minimum 20 characters (${20 - freeText.length} more needed)`
-              : '✓ Looking good!'}
+              ? `Mínimo 20 caracteres (faltam ${20 - freeText.length})`
+              : '✓ Ótimo!'}
           </p>
+        </div>
+
+        {/* Skills Autocomplete */}
+        <div className="card-elevated p-6 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Zap className="w-5 h-5 text-highlight" />
+            <h3 className="font-heading font-semibold text-foreground">Habilidades</h3>
+            <span className="text-xs text-muted-foreground ml-auto">Catálogo com autocomplete e correção</span>
+          </div>
+          <SkillAutocomplete
+            onAdd={addSkill}
+            existingSkills={profile.skills.map(s => s.name)}
+          />
+          {profile.skills.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              <AnimatePresence>
+                {profile.skills.map(skill => (
+                  <motion.span
+                    key={skill.name}
+                    layout
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm ${
+                      skill.category === 'hard'
+                        ? 'bg-highlight-soft text-highlight border-highlight/20'
+                        : 'bg-success-soft text-success border-success/20'
+                    }`}
+                  >
+                    {skill.name}
+                    <button onClick={() => removeSkill(skill.name)} className="hover:opacity-70">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </motion.span>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
 
         {/* Optional inputs */}
@@ -103,8 +144,8 @@ export default function InputStep() {
           <div className="glass-card p-5">
             <div className="flex items-center gap-2 mb-3">
               <Link2 className="w-4 h-4 text-muted-foreground" />
-              <h4 className="font-heading text-sm font-medium text-foreground">LinkedIn URL</h4>
-              <span className="text-xs text-muted-foreground ml-auto">Optional</span>
+              <h4 className="font-heading text-sm font-medium text-foreground">LinkedIn</h4>
+              <span className="text-xs text-muted-foreground ml-auto">Opcional</span>
             </div>
             <input
               type="url"
@@ -119,7 +160,7 @@ export default function InputStep() {
             <div className="flex items-center gap-2 mb-3">
               <FileText className="w-4 h-4 text-muted-foreground" />
               <h4 className="font-heading text-sm font-medium text-foreground">Upload CV</h4>
-              <span className="text-xs text-muted-foreground ml-auto">Optional</span>
+              <span className="text-xs text-muted-foreground ml-auto">Opcional</span>
             </div>
             <input
               ref={fileRef}
@@ -142,7 +183,7 @@ export default function InputStep() {
                 className="w-full flex items-center justify-center gap-2 bg-surface rounded-lg border border-dashed border-border px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:border-highlight/50 transition-all"
               >
                 <Upload className="w-4 h-4" />
-                Choose file
+                Escolher arquivo
               </button>
             )}
           </div>
@@ -156,7 +197,7 @@ export default function InputStep() {
             whileHover={canProceed ? { scale: 1.02 } : {}}
             whileTap={canProceed ? { scale: 0.98 } : {}}
           >
-            {mode === 'quick' ? 'Analyze Now' : 'Continue'}
+            {mode === 'quick' ? 'Analisar Agora' : 'Continuar'}
             <ArrowRight className="w-5 h-5" />
           </motion.button>
         </div>

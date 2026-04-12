@@ -1,19 +1,15 @@
-export interface SkillItem {
+export type SkillCategory = 'hard' | 'soft';
+
+export interface NormalizedSkill {
   name: string;
-  level: 'beginner' | 'intermediate' | 'advanced' | 'expert';
-  category: 'hard' | 'soft';
+  category: SkillCategory;
 }
 
 export interface UserProfile {
   freeText: string;
   linkedinUrl?: string;
   cvText?: string;
-  hardSkills: SkillItem[];
-  softSkills: SkillItem[];
-  languages: string[];
-  experience: string[];
-  courses: string[];
-  certifications: string[];
+  skills: NormalizedSkill[];
 }
 
 export interface OceanScores {
@@ -39,7 +35,7 @@ export interface SkillValidation {
   declared: boolean;
   evidencedByExperience: boolean;
   alignedWithBehavior: boolean;
-  reliability: 'low' | 'medium' | 'high';
+  reliability: ConfidenceLevel;
   note: string;
 }
 
@@ -47,7 +43,7 @@ export interface ImprovementStep {
   order: number;
   action: string;
   skill: string;
-  impact: 'low' | 'medium' | 'high';
+  impact: ConfidenceLevel;
   timeEstimate: string;
   reason: string;
 }
@@ -60,22 +56,17 @@ export interface RoleMatch {
   behavioralMatch: number;
   explanation: string;
   presentSkills: string[];
-  missingSkills: {
-    hard: string[];
-    soft: string[];
-    languages: string[];
-  };
-  effortLevel: 'low' | 'medium' | 'high';
+  missingSkills: string[];
+  criticalGaps: string[];
+  effortLevel: ConfidenceLevel;
   estimatedTime: string;
   confidence: ConfidenceLevel;
   readiness: ReadinessLevel;
-  criticalGaps: string[];
 }
 
 export interface CareerDirection {
   name: string;
   compatibility: number;
-  roles: RoleMatch[];
   isComfortZone: boolean;
   isGrowthZone: boolean;
 }
@@ -89,7 +80,7 @@ export interface SkillSimulation {
 
 export interface RiskInsight {
   role: string;
-  riskLevel: 'low' | 'medium' | 'high';
+  riskLevel: ConfidenceLevel;
   reason: string;
   recommendation: string;
 }
@@ -98,15 +89,15 @@ export interface ProfileInference {
   seniorityLevel: string;
   profileType: string;
   generalistVsSpecialist: string;
-  profileClarity: 'low' | 'medium' | 'high';
+  profileClarity: ConfidenceLevel;
   inconsistencies: string[];
 }
 
 export interface CareerPathComparison {
   pathA: string;
   pathB: string;
-  effortA: 'low' | 'medium' | 'high';
-  effortB: 'low' | 'medium' | 'high';
+  effortA: ConfidenceLevel;
+  effortB: ConfidenceLevel;
   timeA: string;
   timeB: string;
   compatibilityA: number;
@@ -130,4 +121,4 @@ export interface CareerAnalysis {
   careerComparisons: CareerPathComparison[];
 }
 
-export type WizardStep = 'landing' | 'input' | 'profile' | 'assessment' | 'analyzing' | 'results';
+export type WizardStep = 'landing' | 'input' | 'assessment' | 'analyzing' | 'results';
