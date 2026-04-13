@@ -1,26 +1,82 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Link2, MessageSquare, Upload, X, Zap, Layers, FileText } from 'lucide-react';
+import { ArrowRight, Link2, MessageSquare, Upload, X, Zap, Layers, FileText, Loader2 } from 'lucide-react';
 import { useCareer } from '@/contexts/CareerContext';
+import { supabase } from '@/integrations/supabase/client';
 import SkillAutocomplete from './SkillAutocomplete';
 import type { AnalysisMode } from '@/types/career';
+import { toast } from '@/hooks/use-toast';
 
 export default function InputStep() {
   const { profile, updateProfile, setStep, mode, setMode, addSkill, removeSkill } = useCareer();
   const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedinUrl || '');
   const [freeText, setFreeText] = useState(profile.freeText);
   const [cvFileName, setCvFileName] = useState<string | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setCvFileName(file.name);
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      updateProfile({ cvText: ev.target?.result as string });
+    reader.onload = async (ev) => {
+      const text = ev.target?.result as string;
+      updateProfile({ cvText: text });
+      // Auto-extract skills from CV
+      await extractProfile(undefined, text);
     };
     reader.readAsText(file);
+  };
+
+  const extractProfile = async (url?: string, cvText?: string) => {
+    const linkedIn = url || linkedinUrl;
+    if (!linkedIn && !cvText) return;
+
+    setIsExtracting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('extract-profile', {
+        body: { linkedinUrl: linkedIn || undefined, cvText: cvText || undefined },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      // Auto-fill extracted skills
+      if (data?.skills && Array.isArray(data.skills)) {
+        data.skills.forEach((s: { name: string; category: 'hard' | 'soft' }) => {
+          if (s.name && s.category) {
+            addSkill(s.name, s.category);
+          }
+        });
+      }
+
+      // Auto-fill summary if free text is empty
+      if (data?.summary && !freeText.trim()) {
+        setFreeText(data.summary);
+        updateProfile({ freeText: data.summary });
+      }
+
+      toast({
+        title: '✓ Perfil extraído',
+        description: `${data?.skills?.length || 0} habilidades encontradas`,
+      });
+    } catch (err: any) {
+      console.error('Extraction failed:', err);
+      toast({
+        title: 'Erro na extração',
+        description: err?.message || 'Não foi possível extrair o perfil.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handleLinkedinBlur = () => {
+    if (linkedinUrl.trim() && linkedinUrl.includes('linkedin.com')) {
+      extractProfile(linkedinUrl);
+    }
   };
 
   const canProceed = freeText.trim().length >= 20;
@@ -140,7 +196,7 @@ export default function InputStep() {
         </div>
 
         {/* Optional inputs */}
-        <div className="grid md:grid-cols-2 gap-4 mb-8">
+        <div className="grid md:grid-cols-2 gap-4 mb-4">
           <div className="glass-card p-5">
             <div className="flex items-center gap-2 mb-3">
               <Link2 className="w-4 h-4 text-muted-foreground" />
@@ -151,9 +207,13 @@ export default function InputStep() {
               type="url"
               value={linkedinUrl}
               onChange={(e) => setLinkedinUrl(e.target.value)}
+              onBlur={handleLinkedinBlur}
               placeholder="https://linkedin.com/in/..."
               className="w-full bg-surface rounded-lg border border-border px-3 py-2.5 text-foreground font-body text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring transition-all"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Cole a URL e as habilidades serão extraídas automaticamente
+            </p>
           </div>
 
           <div className="glass-card p-5">
@@ -189,10 +249,22 @@ export default function InputStep() {
           </div>
         </div>
 
-        <div className="flex justify-center">
+        {/* Extraction status */}
+        {isExtracting && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-center gap-2 p-3 mb-4 rounded-lg bg-highlight-soft text-highlight text-sm"
+          >
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Extraindo habilidades do perfil...
+          </motion.div>
+        )}
+
+        <div className="flex justify-center mt-4">
           <motion.button
             onClick={handleNext}
-            disabled={!canProceed}
+            disabled={!canProceed || isExtracting}
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl accent-gradient text-accent-foreground font-heading font-semibold disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-shadow"
             whileHover={canProceed ? { scale: 1.02 } : {}}
             whileTap={canProceed ? { scale: 0.98 } : {}}
